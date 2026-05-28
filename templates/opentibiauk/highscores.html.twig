@@ -1,0 +1,94 @@
+{# OpenTibia.UK — highscores, terminal aesthetic.
+   Variables from system/pages/highscores.php:
+   highscores[] (rank, link, name, online, vocation, value, experience, outfit, flag),
+   list, skill, skillName, levelName, vocation, vocationId, types{link:name},
+   linkPreviousPage, linkNextPage, totalResults, page.
+   Top 3 rows get rank-1/2/3 classes (gold/white/green) via .rk. #}
+<div class="panel mb-16">
+	<div class="row gap-16 wrap" style="align-items: flex-end;">
+		<div style="flex: 0 0 220px;">
+			<label class="upper dim mb-8" style="display:block;">skill</label>
+			<select class="select" onchange="location = this.value;">
+				{% for link, name in types %}
+					<option value="{{ getLink('highscores') }}/{{ link|urlencode }}{% if vocation is not null %}/{{ vocation|lower|urlencode }}{% endif %}"{% if list is not null and list == link %} selected{% endif %}>{{ name }}</option>
+				{% endfor %}
+			</select>
+		</div>
+		<div style="flex: 0 0 220px;">
+			<label class="upper dim mb-8" style="display:block;">vocation</label>
+			<select class="select" onchange="location = this.value;">
+				<option value="{{ getLink('highscores') }}/{{ list|urlencode }}">all</option>
+				{% for i in 0..config.vocations_amount %}
+					<option value="{{ getLink('highscores') }}/{{ list|urlencode }}/{{ config.vocations[i]|lower|urlencode }}"{% if vocationId is not null and vocationId == i %} selected{% endif %}>{{ config.vocations[i]|lower }}</option>
+				{% endfor %}
+			</select>
+		</div>
+		<div style="flex: 1; min-width: 200px;">
+			<label class="upper dim mb-8" style="display:block;">filter</label>
+			<input class="input" id="hs-filter" placeholder="search by name…" />
+		</div>
+	</div>
+	<div class="fs-xs dim mt-16">// ranking for {{ skillName|lower }}{% if vocation is not null %} · {{ vocation|lower }}{% endif %} · perpetual, no resets</div>
+</div>
+
+<div class="panel" style="padding: 0;">
+	<table class="table">
+		<thead>
+			<tr>
+				{% if setting('core.account_country') %}<th style="width: 24px;"></th>{% endif %}
+				<th style="width: 60px;">#</th>
+				{% if setting('core.highscores_outfit') %}<th>outfit</th>{% endif %}
+				<th>name</th>
+				<th class="num">{{ levelName|lower }}</th>
+				{% if setting('core.highscores_vocation') %}<th>vocation</th>{% endif %}
+				{% if skill == constant('POT::SKILL__LEVEL') %}<th class="num">experience</th>{% endif %}
+				<th></th>
+			</tr>
+		</thead>
+		<tbody id="hs-body">
+			{% if highscores|length < 1 %}
+				<tr><td colspan="100%"><span class="dim">no records yet.</span></td></tr>
+			{% else %}
+				{% for player in highscores %}
+				<tr class="{% if player.rank <= 3 %}rank-{{ player.rank }}{% endif %}">
+					{% if setting('core.account_country') %}<td>{{ player.flag|raw }}</td>{% endif %}
+					<td><span class="rk tabular">{{ '%02d'|format(player.rank) }}</span></td>
+					{% if setting('core.highscores_outfit') %}<td>{{ player.outfit|raw }}</td>{% endif %}
+					<td>
+						<a href="{{ player.link }}">{{ player.name }}</a>
+						{% if setting('core.highscores_online_status') and player.online > 0 %}<span class="badge ok" style="margin-left: 8px;">●</span>{% endif %}
+					</td>
+					<td class="num tabular">{{ player.value }}</td>
+					{% if setting('core.highscores_vocation') %}
+					<td>{% set vc = player.vocation starts with 'Knight' ? 'k' : (player.vocation starts with 'Paladin' or player.vocation starts with 'Royal' ? 'p' : (player.vocation starts with 'Druid' or player.vocation starts with 'Elder' ? 'd' : 's')) %}<span class="voc {{ vc }}">{{ player.vocation|lower }}</span></td>
+					{% endif %}
+					{% if skill == constant('POT::SKILL__LEVEL') %}<td class="num tabular dim">{{ player.experience }}</td>{% endif %}
+					<td class="right"><a href="{{ player.link }}" class="fs-xs">view →</a></td>
+				</tr>
+				{% endfor %}
+			{% endif %}
+		</tbody>
+	</table>
+</div>
+
+<div class="row between mt-16 fs-xs dim wrap">
+	<span>{% if totalResults is defined and totalResults %}{{ totalResults }} ranked · {% endif %}perpetual ranking, no resets</span>
+	<span class="row gap-16">
+		{% if linkPreviousPage|length > 0 %}<a href="{{ linkPreviousPage }}">← prev</a>{% endif %}
+		{% if linkNextPage|length > 0 %}<a href="{{ linkNextPage }}">next →</a>{% endif %}
+	</span>
+</div>
+
+<script type="text/javascript">
+(function () {
+	var f = document.getElementById('hs-filter');
+	var body = document.getElementById('hs-body');
+	if (!f || !body) return;
+	f.addEventListener('input', function () {
+		var q = f.value.toLowerCase();
+		Array.prototype.slice.call(body.querySelectorAll('tr')).forEach(function (tr) {
+			tr.style.display = tr.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none';
+		});
+	});
+})();
+</script>

@@ -1,0 +1,79 @@
+{# OpenTibia.UK — login, terminal aesthetic.
+   Variables from system/pages/account/login.php / base.php:
+   account_login_by, account, error, redirect
+   Server-side validation is MyAAC's; we just style the form. #}
+{{ hook('HOOK_ACCOUNT_LOGIN_BEFORE_PAGE') }}
+<div class="grid-12">
+	<div style="grid-column: span 8;">
+		<form class="panel" action="{{ getLink('account/manage') }}" method="post">
+			{{ csrf() }}
+			{% if redirect is not null %}
+				<input type="hidden" name="redirect" value="{{ redirect }}" />
+			{% endif %}
+
+			<div class="panel-head"><h3>$ ./login</h3><span class="panel-meta">tcp/7172</span></div>
+
+			{{ hook('HOOK_ACCOUNT_LOGIN_BEFORE_ACCOUNT') }}
+
+			<div class="field">
+				<div class="lbl-row">
+					<label for="account_login">{{ account_login_by|lower }}</label>
+					<span class="hint">case-insensitive</span>
+				</div>
+				<input id="account_login" type="text" name="account_login" autocomplete="username" autofocus
+					class="input {% if error is not null %}invalid{% endif %}"
+					maxlength="{{ setting('core.account_login_by_email') ? '255' : '30' }}"
+					placeholder="e.g. saltsprite" />
+			</div>
+
+			{{ hook('HOOK_ACCOUNT_LOGIN_AFTER_ACCOUNT') }}
+			{{ hook('HOOK_ACCOUNT_LOGIN_BEFORE_PASSWORD') }}
+
+			<div class="field">
+				<div class="lbl-row">
+					<label for="password_login">password</label>
+				</div>
+				<input id="password_login" type="password" name="password_login" autocomplete="current-password"
+					class="input {% if error is not null %}invalid{% endif %}"
+					maxlength="29" placeholder="••••••••" />
+				{% if error is not null %}
+					<div class="field-msg err">↳ {{ error }}</div>
+				{% endif %}
+			</div>
+
+			{{ hook('HOOK_ACCOUNT_LOGIN_AFTER_PASSWORD') }}
+
+			<div class="row between mt-8 wrap">
+				<label class="row gap-8 fs-xs dim" style="cursor: pointer;">
+					<input type="checkbox" id="remember_me" name="remember_me" value="true" />
+					keep me logged in for 30 days
+				</label>
+				<div class="row gap-8">
+					<a class="btn ghost" href="{{ getLink('account/create') }}">create account</a>
+					<a class="btn" href="{{ getLink('account/lost') }}">lost account</a>
+					<button type="submit" class="btn primary">$ login</button>
+				</div>
+			</div>
+
+			{{ hook('HOOK_ACCOUNT_LOGIN_AFTER_REMEMBER_ME') }}
+		</form>
+	</div>
+
+	<div style="grid-column: span 4;">
+		<div class="panel">
+			<div class="panel-head"><h3>cli equivalent</h3></div>
+			<pre class="fs-xs dim" style="margin: 0; white-space: pre-wrap;">$ otc login \
+   --server  {{ config.lua.serverName|lower }} \
+   --account &lt;name&gt; \
+   --pass    &lt;pass&gt;
+
+# uses ~/.otc/config if set
+# session cookie at ~/.otc/sess</pre>
+			<div class="hr"></div>
+			<div class="fs-xs dim">
+				<div class="cmt">note</div>
+				We will never DM you on Discord. If someone asks for your account password, they are lying to you. We pinky-promise.
+			</div>
+		</div>
+	</div>
+</div>

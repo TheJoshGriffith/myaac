@@ -1,0 +1,80 @@
+{# OpenTibia.UK — online / who, terminal aesthetic.
+   Variables from system/pages/online.php:
+   players[] (name|raw, level, vocation, skull|raw, outfit, country_image),
+   record, vocations (vocs keyed by vocation id), order.
+   Globals: status (online/players), config.
+   Prototype's cpu/ram/net/session-length/sparkline aren't surfaced by this AAC,
+   so we show the real KPIs and an empty .spark placeholder. #}
+{% set onlineTTL = setting('core.online_cache_ttl') %}
+{% if onlineTTL > 0 and cache.enabled() %}
+<div class="fs-xs dim mb-16">// online list updated every{{ onlineTTL > 1 ? ' ' ~ onlineTTL : '' }} minute{{ onlineTTL > 1 ? 's' : '' }}.</div>
+{% endif %}
+
+<div class="grid-12 mb-16">
+	<div style="grid-column: span 4;">
+		<div class="panel">
+			<div class="panel-head"><h3>server load</h3><span class="panel-meta {% if status.online %}accent{% else %}danger{% endif %}">{% if status.online %}healthy{% else %}offline{% endif %}</span></div>
+			<div class="col gap-8 fs-sm">
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">players</span><span class="tabular accent">{{ players|length }}</span></div>
+				{% if setting('core.online_record') and record|length > 0 %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">record</span><span class="tabular">{{ record }}</span></div>
+				{% endif %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">status</span><span>{% if status.online %}<span class="accent">● online</span>{% else %}<span class="danger">offline</span>{% endif %}</span></div>
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">pvp</span><span>
+					{% set worldType = config('lua')['worldType']|lower %}
+					{% if worldType in ['pvp','2','normal','open','openpvp'] %}open pvp
+					{% elseif worldType in ['no-pvp','nopvp','non-pvp','nonpvp','1','safe','optional','optionalpvp'] %}optional pvp
+					{% elseif worldType in ['pvp-enforced','pvpenforced','pvp-enfo','pvpenfo','pvpe','enforced','enfo','3','war','hardcore','hardcorepvp'] %}hardcore pvp
+					{% endif %}
+				</span></div>
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">server time</span><span class="tabular dim">{{ "now"|date("H:i:s") }}</span></div>
+			</div>
+			<div class="hr"></div>
+			<div class="fs-xs dim mb-8">players online · history n/a</div>
+			<div class="spark"></div>
+		</div>
+	</div>
+	<div style="grid-column: span 8;">
+		<div class="panel">
+			<div class="panel-head"><h3>distribution</h3><span class="panel-meta">by vocation</span></div>
+			<div class="grid-4">
+				{% for i in 1..config.vocations_amount %}
+				<div>
+					<div class="upper mute">{{ config.vocations[i]|lower }}</div>
+					<div class="tabular" style="font-size: var(--fs-2xl);">{{ vocations[i]|default(0) }}</div>
+					<div class="bar mt-8"><i style="width: {{ players|length > 0 ? (vocations[i]|default(0) / players|length * 100) : 0 }}%;"></i></div>
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="panel" style="padding: 0;">
+	<table class="table">
+		<thead>
+			<tr>
+				{% if setting('core.account_country') %}<th style="width: 24px;"></th>{% endif %}
+				{% if setting('core.online_outfit') %}<th style="width: 40px;">outfit</th>{% endif %}
+				<th><a href="{{ getLink('online') }}?order=name_{{ order == 'name_asc' ? 'desc' : 'asc' }}">name</a></th>
+				<th class="num"><a href="{{ getLink('online') }}?order=level_{{ order == 'level_asc' ? 'desc' : 'asc' }}">level</a></th>
+				<th><a href="{{ getLink('online') }}?order=vocation_{{ order == 'vocation_asc' ? 'desc' : 'asc' }}">vocation</a></th>
+			</tr>
+		</thead>
+		<tbody>
+			{% if players|length < 1 %}
+				<tr><td colspan="100%"><span class="dim">nobody online.</span></td></tr>
+			{% else %}
+				{% for player in players %}
+				<tr>
+					{% if setting('core.account_country') %}<td>{{ player.country_image|raw }}</td>{% endif %}
+					{% if setting('core.online_outfit') %}<td><img src="{{ player.outfit }}" alt="" style="height: 32px;" /></td>{% endif %}
+					<td>{{ player.name|raw }}{{ player.skull|raw }}</td>
+					<td class="num tabular">{{ player.level }}</td>
+					<td>{% set vc = player.vocation starts with 'Knight' ? 'k' : (player.vocation starts with 'Paladin' or player.vocation starts with 'Royal' ? 'p' : (player.vocation starts with 'Druid' or player.vocation starts with 'Elder' ? 'd' : 's')) %}<span class="voc {{ vc }}">{{ player.vocation|lower }}</span></td>
+				</tr>
+				{% endfor %}
+			{% endif %}
+		</tbody>
+	</table>
+</div>

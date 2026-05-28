@@ -1,0 +1,154 @@
+{# OpenTibia.UK — signup interactivity (vanilla JS, no jQuery / no React).
+   Handles: live preview, password strength meter, vocation card + sex selection,
+   confirm-password match, and a "ready / N thing(s) need attention" status line.
+   All checks here are UX only; the server (account/create.php) is authoritative. #}
+<script type="text/javascript">
+(function () {
+	function $(sel, ctx) { return (ctx || document).querySelector(sel); }
+	function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
+
+	var form = document.getElementById('createaccount');
+	if (!form) return;
+
+	// --- vocation cards ---
+	$$('[data-voc-card]', form).forEach(function (card) {
+		card.addEventListener('click', function () {
+			$$('[data-voc-card]', form).forEach(function (c) {
+				c.style.borderColor = '';
+				c.style.background = '';
+			});
+			card.style.borderColor = 'var(--accent)';
+			card.style.background = 'var(--bg-row)';
+			var radio = card.querySelector('input[type=radio]');
+			if (radio) radio.checked = true;
+			update();
+		});
+	});
+
+	// --- sex toggle ---
+	$$('[data-sex-btn]', form).forEach(function (btn) {
+		btn.addEventListener('click', function () {
+			$$('[data-sex-btn]', form).forEach(function (b) { b.classList.remove('primary'); });
+			btn.classList.add('primary');
+			var radio = btn.querySelector('input[type=radio]');
+			if (radio) radio.checked = true;
+			update();
+		});
+	});
+
+	// --- password strength ---
+	function scorePw(pw) {
+		if (!pw || pw.length < 10) return 0;
+		var s = 1;
+		if (/[A-Z]/.test(pw)) s++;
+		if (/[0-9]/.test(pw)) s++;
+		if (/[^A-Za-z0-9]/.test(pw)) s++;
+		return Math.min(4, s);
+	}
+	var pwLabels = ['too short', 'weak', 'okay', 'strong', 'very strong'];
+	var pwColors = ['var(--danger)', 'var(--warn)', 'var(--warn)', 'var(--accent)', 'var(--accent)'];
+
+	var pw = $('[data-pwmeter]', form);
+	var pwMeter = $('#pwmeter');
+	var pwBar = $('#pwmeter_bar');
+	var pwLabel = $('#pwmeter_label');
+	if (pw) {
+		pw.addEventListener('input', function () {
+			if (!pw.value) { pwMeter.style.display = 'none'; update(); return; }
+			pwMeter.style.display = 'block';
+			var s = scorePw(pw.value);
+			pwBar.style.width = (s / 4 * 100) + '%';
+			pwBar.style.background = pwColors[s];
+			pwLabel.textContent = pwLabels[s];
+			pwLabel.style.color = pwColors[s];
+			update();
+		});
+	}
+
+	// --- confirm password ---
+	var pw2 = document.getElementById('password_confirm');
+	var pw2Msg = document.getElementById('pwconfirm_msg');
+	function checkConfirm() {
+		if (!pw2 || !pw) return true;
+		if (pw2.value && pw2.value !== pw.value) {
+			pw2.classList.add('invalid');
+			if (pw2Msg) pw2Msg.style.display = 'block';
+			return false;
+		}
+		pw2.classList.remove('invalid');
+		if (pw2Msg) pw2Msg.style.display = 'none';
+		return true;
+	}
+	if (pw2) pw2.addEventListener('input', function () { checkConfirm(); update(); });
+
+	// --- live preview + status line ---
+	function val(name) {
+		var el = form.querySelector('[data-preview="' + name + '"]');
+		if (!el) return '';
+		if (el.tagName === 'SELECT') return el.options[el.selectedIndex] ? el.options[el.selectedIndex].text : '';
+		return el.value;
+	}
+	function selectedVoc() {
+		var card = $$('[data-voc-card]', form).filter(function (c) {
+			var r = c.querySelector('input[type=radio]');
+			return r && r.checked;
+		})[0];
+		if (!card) return '—';
+		var v = card.querySelector('.voc');
+		return v ? v.textContent : '—';
+	}
+	function selectedSex() {
+		var btn = $$('[data-sex-btn]', form).filter(function (b) { return b.classList.contains('primary'); })[0];
+		return btn ? btn.textContent.trim() : '—';
+	}
+
+	var preview = document.getElementById('signup_preview');
+	var status = document.getElementById('signup_status');
+
+	function ready() {
+		var account = val('account');
+		var okAccount = account === '' ? false : /^[a-z0-9]{6,24}$/.test(account.toLowerCase());
+		var email = val('email');
+		var okEmail = email === '' || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+		var okPw = pw ? (pw.value.length >= 10 && scorePw(pw.value) >= 2) : true;
+		var okPw2 = pw2 ? (pw2.value !== '' && pw2.value === (pw ? pw.value : '')) : true;
+		var charEl = form.querySelector('[data-preview="character"]');
+		var okChar = charEl ? /^[A-Za-z][A-Za-z ]{1,22}[A-Za-z]$/.test(charEl.value) && !/  /.test(charEl.value) : true;
+		var tos = document.getElementById('accept_rules');
+		var okTos = tos ? tos.checked : true;
+		var fails = 0;
+		[okAccount, okEmail, okPw, okPw2, okChar, okTos].forEach(function (ok) { if (!ok) fails++; });
+		return fails;
+	}
+
+	function update() {
+		if (preview) {
+			var charEl = form.querySelector('[data-preview="character"]');
+			var fails = ready();
+			preview.textContent =
+				'account:    ' + (val('account') || '—') + '\n' +
+				'email:      ' + (val('email') || '(none)') + '\n' +
+				(charEl ? 'character:  ' + (charEl.value || '—') + '\n' : '') +
+				(charEl ? 'vocation:   ' + selectedVoc() + '\n' : '') +
+				(charEl ? 'sex:        ' + selectedSex() + '\n' : '') +
+				(form.querySelector('[data-preview="town"]') ? 'town:       ' + val('town') + '\n' : '') +
+				'status:     ' + (fails === 0 ? 'ready' : 'incomplete');
+		}
+		if (status) {
+			var f = ready();
+			if (f === 0) {
+				status.innerHTML = '<span class="accent">ready to submit</span>';
+			} else {
+				status.textContent = f + ' thing(s) need attention';
+			}
+		}
+	}
+
+	$$('input, select, textarea', form).forEach(function (el) {
+		el.addEventListener('input', update);
+		el.addEventListener('change', update);
+	});
+
+	update();
+})();
+</script>

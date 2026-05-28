@@ -1,0 +1,148 @@
+{# OpenTibia.UK — character profile, terminal aesthetic.
+   Variables from system/pages/characters.php:
+   player (OTS_Player), account, outfit, flag, oldName, sex, vocation, town,
+   house{found,name,town,add}, guild{rank,link}, comment, skills[] (name/value),
+   deaths[] (time/description), frags[] (time/description/unjustified),
+   account_players (OTS_Player list), search_form (html), canEdit, skull,
+   config.characters.* feature flags, marriage_enabled, marital_status,
+   frags_enabled, frags_count, bannedUntil. #}
+{{ hook('HOOK_CHARACTERS_BEFORE_INFORMATIONS') }}
+{% set voc = player.getVocationName() %}
+{% set vcls = voc starts with 'Knight' ? 'k' : (voc starts with 'Paladin' or voc starts with 'Royal' ? 'p' : (voc starts with 'Druid' or voc starts with 'Elder' ? 'd' : 's')) %}
+
+<div class="sub mb-24">// character / <a href="{{ getLink('characters') }}">lookup</a> · {{ flag|raw }} <span class="accent">{{ player.getName() }}</span>{% if player.isOnline() %} · <span class="accent">● online</span>{% endif %}{% if oldName %} {{ oldName }}{% endif %}</div>
+
+{% if canEdit %}
+<div class="mb-16"><a class="btn sm ghost" href="{{ constant('ADMIN_URL') }}?p=players&id={{ player.getId() }}" target="_blank">edit in admin panel</a></div>
+{% endif %}
+
+<div class="grid-12">
+	<div style="grid-column: span 4;">
+		<div class="panel mb-16">
+			{% if config.characters.outfit and outfit %}
+			<div class="portrait mb-16" style="height: 200px; width: 100%;">
+				<div class="center"><img src="{{ outfit }}" alt="outfit" style="max-height: 128px;" /></div>
+			</div>
+			{% else %}
+			<div class="portrait mb-16" style="height: 200px; width: 100%;">
+				<div class="center">{{ player.getName() }}<br/><span class="dim fs-xs">[outfit preview]</span></div>
+			</div>
+			{% endif %}
+			<div class="col gap-8 fs-sm">
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">name</span><span>{{ player.getName() }}</span></div>
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">sex</span><span>{{ sex|lower }}</span></div>
+				{% if marriage_enabled %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">marital</span><span>{{ marital_status }}</span></div>
+				{% endif %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">vocation</span><span class="voc {{ vcls }}">{{ vocation|lower }}</span></div>
+				{% if config.characters.level %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">level</span><span class="accent tabular">{{ player.getLevel() }}</span></div>
+				{% endif %}
+				{% if config.characters.experience %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">experience</span><span class="tabular">{{ player.getExperience()|number_format(0, '.', ',') }}</span></div>
+				{% endif %}
+				{% if config.characters.magic_level %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">magic</span><span class="tabular">{{ player.getMagLevel() }}</span></div>
+				{% endif %}
+				{% if frags_enabled %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">frags</span><span class="tabular">{{ frags_count }}</span></div>
+				{% endif %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">residence</span><span>{{ town }}</span></div>
+				{% if config.characters.balance %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">balance</span><span class="tabular">{{ player.getBalance()|number_format(0, '.', ',') }} gp</span></div>
+				{% endif %}
+				{% if guild.rank is not null %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">guild</span><span>{{ guild.rank }} · {{ guild.link|raw }}</span></div>
+				{% endif %}
+				{% if house.found %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">house</span><span>{{ house.name ~ house.town }}</span></div>
+				{% endif %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">status</span><span>{% if player.isOnline() %}<span class="accent">● online</span>{% else %}<span class="dim">offline</span>{% endif %}</span></div>
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">last login</span><span class="dim tabular">{% if player.getLastLogin() == 0 %}never{% else %}{{ player.getLastLogin()|date("Y-m-d H:i") }}{% endif %}</span></div>
+				{% if config.characters.creation_date %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">created</span><span class="dim tabular">{{ player.getCreated()|date("Y-m-d") }}</span></div>
+				{% endif %}
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">account</span><span>{% if account.isPremium() %}premium{% else %}free{% endif %}</span></div>
+			</div>
+		</div>
+
+		{% if comment is not null %}
+		<div class="panel">
+			<div class="panel-head"><h3>character comments</h3><span class="panel-meta">set by player</span></div>
+			<pre class="fs-sm" style="margin:0; color: var(--fg-dim); white-space: pre-wrap;">{{ comment|raw }}</pre>
+		</div>
+		{% endif %}
+	</div>
+
+	<div style="grid-column: span 8;">
+		{{ hook('HOOK_CHARACTERS_BEFORE_SKILLS') }}
+		{% if config.characters.skills and skills is not null %}
+		<div class="panel mb-16">
+			<div class="panel-head"><h3>skills</h3><span class="panel-meta">current value</span></div>
+			<div>
+				{% for skill in skills %}
+				<div class="skillrow">
+					<span class="lbl">{{ skill.name }}</span>
+					<div class="bar"><i style="width: {{ (skill.value % 100) }}%;"></i></div>
+					<span class="v">{{ skill.value }}</span>
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+		{% endif %}
+		{{ hook('HOOK_CHARACTERS_AFTER_SKILLS') }}
+
+		<div class="grid-2">
+			{{ hook('HOOK_CHARACTERS_BEFORE_DEATHS') }}
+			<div class="panel">
+				<div class="panel-head"><h3>recent deaths</h3><span class="panel-meta">{{ deaths|length }} logged</span></div>
+				{% if deaths|length > 0 %}
+					{% for death in deaths %}
+					<div class="fs-sm" style="padding: 8px 0; border-bottom: 1px dotted var(--border);">
+						<div class="row between"><span class="tabular mute">{{ death.time|date("Y-m-d H:i") }}</span></div>
+						<div class="dim mt-8">{{ death.description|raw }}</div>
+					</div>
+					{% endfor %}
+				{% else %}
+					<div class="fs-sm dim">no deaths recorded. lucky, or careful.</div>
+				{% endif %}
+			</div>
+
+			{% if frags_enabled and frags|length > 0 %}
+			<div class="panel">
+				<div class="panel-head"><h3>victims</h3><span class="panel-meta">{{ frags|length }}</span></div>
+				{% for frag in frags %}
+				<div class="fs-sm" style="padding: 8px 0; border-bottom: 1px dotted var(--border);">
+					<div class="row between"><span class="tabular mute">{{ frag.time|date("Y-m-d H:i") }}</span>{% if frag.unjustified %}<span class="badge danger">unjustified</span>{% else %}<span class="badge ok">justified</span>{% endif %}</div>
+					<div class="dim mt-8">{{ frag.description|raw }}</div>
+				</div>
+				{% endfor %}
+			</div>
+			{% else %}
+			<div class="panel">
+				<div class="panel-head"><h3>account characters</h3><span class="panel-meta">visible</span></div>
+				{% if account_players is not null and not player.isHidden() %}
+					{% for p in account_players %}
+						{% if not p.isHidden() and (config('characters')['deleted'] or not p.isDeleted()) %}
+						<div class="row between fs-sm" style="padding: 6px 0; border-bottom: 1px dotted var(--border);">
+							<a href="{{ getLink('characters/' ~ p.getName()|urlencode) }}">{{ p.getName() }}</a>
+							<span class="tabular dim">L {{ p.getLevel() }} {{ p.getVocationName()|lower }}</span>
+						</div>
+						{% endif %}
+					{% endfor %}
+				{% else %}
+					<div class="fs-sm dim">not shared.</div>
+				{% endif %}
+			</div>
+			{% endif %}
+		</div>
+		{{ hook('HOOK_CHARACTERS_AFTER_QUESTS') }}
+		{{ hook('HOOK_CHARACTERS_AFTER_ACCOUNT') }}
+	</div>
+</div>
+
+{{ hook('HOOK_CHARACTERS_AFTER_CHARACTERS') }}
+
+<div class="mt-32">
+	{{ search_form|raw }}
+</div>

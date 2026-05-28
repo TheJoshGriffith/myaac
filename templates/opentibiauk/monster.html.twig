@@ -1,0 +1,92 @@
+{# OpenTibia.UK — bestiary entry, terminal aesthetic.
+   Variables from system/pages/monsters.php:
+   monster (name, img_link, health, exp, speed_lvl, use_haste, mana, summonable,
+   convinceable, armor, defense, race, rewardboss, voices[], summons[] (chance/name),
+   elements[] (name/percent), immunities[], loot[] (id/count/name/tooltip/rarity)).
+   This AAC has no per-account kill progress, so the prototype's "your progress"
+   bar is omitted. #}
+<div class="sub mb-24">// bestiary / <a href="{{ getLink('monsters') }}">creatures</a> / <span class="accent">{{ monster.name|lower }}</span> · {{ monster.race|lower }}{% if monster.rewardboss %} · reward boss{% endif %}</div>
+
+<div class="grid-12">
+	<div style="grid-column: span 4;">
+		<div class="panel mb-16">
+			<div class="portrait mb-16" style="height: 220px;">
+				<div class="center"><img src="{{ monster.img_link }}" alt="{{ monster.name }}" style="max-height: 96px;" /><br/><span class="dim fs-xs">[sprite preview]</span></div>
+			</div>
+			<div class="col gap-8 fs-sm">
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">class</span><span>{{ monster.race|lower }}</span></div>
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">hp</span><span class="tabular">{{ monster.health|number_format(0, '.', ',') }}</span></div>
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">exp</span><span class="accent tabular">{{ monster.exp|number_format(0, '.', ',') }}</span></div>
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">speed</span><span class="tabular">{{ monster.speed_lvl }}{{ monster.use_haste ? ' (+haste)' : '' }}</span></div>
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">armor</span><span class="tabular">{{ monster.armor }}</span></div>
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">defense</span><span class="tabular">{{ monster.defense }}</span></div>
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">summonable</span><span>{{ monster.summonable ? monster.mana ~ ' mana' : 'no' }}</span></div>
+				<div class="row between" style="border-bottom:1px dotted var(--border); padding-bottom:6px;"><span class="dim upper">convinceable</span><span>{{ monster.convinceable ? monster.mana ~ ' mana' : 'no' }}</span></div>
+			</div>
+		</div>
+	</div>
+
+	<div style="grid-column: span 8;">
+		<div class="grid-2 mb-16">
+			<div class="panel">
+				<div class="panel-head"><h3>resistances</h3><span class="panel-meta">% modifier</span></div>
+				{% if monster.elements is not empty or monster.immunities is not empty %}
+				<table class="table">
+					<tbody>
+						{% for element in monster.elements %}
+						<tr><td>{{ element.name|lower }}</td><td class="num"><span class="{{ element.percent > 0 ? 'accent' : 'warn' }}">{{ element.percent }}%</span></td></tr>
+						{% endfor %}
+						{% for imm in monster.immunities %}
+						<tr><td>{{ imm|lower }}</td><td class="num"><span class="accent">immune</span></td></tr>
+						{% endfor %}
+					</tbody>
+				</table>
+				{% else %}
+				<div class="fs-sm dim">no elemental modifiers.</div>
+				{% endif %}
+			</div>
+			<div class="panel">
+				<div class="panel-head"><h3>loot table</h3><span class="panel-meta">drop chance</span></div>
+				{% if monster.loot is not empty %}
+				<table class="table">
+					<tbody>
+						{% for item in monster.loot %}
+						<tr>
+							<td><a href="{{ setting('core.monsters_items_url') }}{{ item.name|title }}">{{ item.name|lower }}</a>{% if item.count > 1 %} <span class="mute fs-xs">×{{ item.count }}</span>{% endif %}</td>
+							<td class="num"><span class="dim tabular">{{ item.rarity }}</span></td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+				{% else %}
+				<div class="fs-sm dim">drops nothing of note.</div>
+				{% endif %}
+			</div>
+		</div>
+
+		{% if monster.summons is not empty or monster.voices is not empty %}
+		<div class="grid-2">
+			{% if monster.summons is not empty %}
+			<div class="panel">
+				<div class="panel-head"><h3>summons</h3></div>
+				<ul style="margin:0; padding-left: 18px;">
+					{% for summon in monster.summons %}
+					<li class="fs-sm dim" style="padding: 4px 0;">{{ summon.chance }}% · {{ getMonsterLink(summon.name, true)|raw }}</li>
+					{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
+			{% if monster.voices is not empty %}
+			<div class="panel">
+				<div class="panel-head"><h3>sounds</h3><span class="panel-meta">what it says</span></div>
+				<ul style="margin:0; padding-left: 18px;">
+					{% for voice in monster.voices %}
+					<li class="fs-sm" style="padding: 4px 0; font-style: italic; color: var(--accent);">"{{ voice }}"</li>
+					{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
+		</div>
+		{% endif %}
+	</div>
+</div>

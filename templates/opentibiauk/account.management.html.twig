@@ -1,0 +1,197 @@
+{# OpenTibia.UK — account dashboard, terminal aesthetic.
+   Variables from system/pages/account/manage.php:
+   account, account_email, account_created, account_status, account_registered,
+   account_rlname, account_location, recovery_key, email_change, email_request,
+   email_new, email_new_time, actions[] (action/date/ip), players (OTS_Player list).
+   Globals: account_logged, config.
+   Tabs: characters (real data) / sessions (account action log) /
+   audit (n/a) / api (n/a). #}
+<div class="sub mb-24">// authenticated as {{ account }} · {{ players|length }} of {{ setting('core.characters_per_account') }} characters · last login {{ account_logged.getCustomField('web_lastlogin')|date("Y-m-d H:i") }}</div>
+
+{{ hook('HOOK_ACCOUNT_MANAGE_BEFORE_GENERAL_INFORMATION') }}
+
+{% if email_request %}
+<div class="panel mb-16">
+	<div class="fs-sm dim">A request to change the email to <span class="accent">{{ email_new }}</span> is pending. After <span class="mono">{{ email_new_time|date("Y-m-d H:i:s") }}</span> you can finalise it.</div>
+	<form action="{{ getLink('account/change-email') }}" method="post" class="mt-16">
+		{{ csrf() }}
+		<button type="submit" class="btn sm">manage request</button>
+	</form>
+</div>
+{% endif %}
+
+<div class="grid-12">
+	<div style="grid-column: span 4;">
+		<div class="panel mb-16">
+			<div class="panel-head"><h3>account</h3><span class="panel-meta">{% if config.lua.freePremium %}free tier{% else %}{{ account_logged.getPremDays() }} prem days{% endif %}</span></div>
+			<div class="col gap-8 fs-sm">
+				{% if not config.account_login_by_email or config.account_login_by_email_fallback %}
+				<div class="row between" style="border-bottom: 1px dotted var(--border); padding-bottom: 6px;">
+					<span class="dim upper">account</span><span class="tabular">{{ account }}</span>
+				</div>
+				{% endif %}
+				<div class="row between" style="border-bottom: 1px dotted var(--border); padding-bottom: 6px;">
+					<span class="dim upper">email</span><span class="tabular">{{ account_email }}</span>
+				</div>
+				<div class="row between" style="border-bottom: 1px dotted var(--border); padding-bottom: 6px;">
+					<span class="dim upper">created</span><span class="tabular">{{ account_created|date("Y-m-d") }}</span>
+				</div>
+				<div class="row between" style="border-bottom: 1px dotted var(--border); padding-bottom: 6px;">
+					<span class="dim upper">characters</span><span class="tabular">{{ players|length }} / {{ setting('core.characters_per_account') }}</span>
+				</div>
+				<div class="row between" style="border-bottom: 1px dotted var(--border); padding-bottom: 6px;">
+					<span class="dim upper">prem days</span><span class="tabular accent">{% if config.lua.freePremium %}∞ (free server){% else %}{{ account_logged.getPremDays() }}{% endif %}</span>
+				</div>
+				{% autoescape false %}
+				<div class="row between" style="border-bottom: 1px dotted var(--border); padding-bottom: 6px;">
+					<span class="dim upper">status</span><span class="tabular">{{ account_status }}</span>
+				</div>
+				{% endautoescape %}
+			</div>
+			<div class="hr"></div>
+			<div class="row gap-8 wrap">
+				<a class="btn sm" href="{{ getLink('account/change-password') }}">change password</a>
+				<a class="btn sm" href="{{ getLink('account/change-email') }}">change email</a>
+				<a class="btn sm" href="{{ getLink('account/change-info') }}">change info</a>
+			</div>
+		</div>
+
+		<div class="panel">
+			<div class="panel-head"><h3>$ recovery key</h3><span class="panel-meta">offline</span></div>
+			{% if recovery_key is empty %}
+				<div class="fs-sm dim">No recovery key registered. Generate one for increased account protection — we cannot reset your account without it.</div>
+				<form action="{{ getLink('account/register') }}" method="post" class="mt-16">
+					{{ csrf() }}
+					<button type="submit" class="btn sm primary">$ register account</button>
+				</form>
+			{% else %}
+				<pre class="fs-xs" style="margin:0; color: var(--accent); word-break: break-all; white-space: pre-wrap;">{{ recovery_key }}</pre>
+				<div class="fs-xs dim mt-8">save this in a password manager. we cannot recover it for you. yes, really.</div>
+				<div class="row gap-8 mt-16">
+					<a class="btn sm ghost" href="{{ getLink('account/register-new') }}">$ rotate</a>
+				</div>
+			{% endif %}
+		</div>
+	</div>
+
+	<div style="grid-column: span 8;">
+		<div class="tabs" id="dash-tabs">
+			<button class="active" data-tab="characters">characters</button>
+			<button data-tab="sessions">sessions</button>
+			<button data-tab="audit">audit log</button>
+			<button data-tab="api">api keys</button>
+		</div>
+
+		{# --- characters --- #}
+		<div data-pane="characters">
+			{{ hook('HOOK_ACCOUNT_MANAGE_BEFORE_CHARACTERS') }}
+			<div class="row between mb-16 wrap">
+				<span class="dim fs-sm">{{ players|length }} of {{ setting('core.characters_per_account') }} character slots used.</span>
+				<form action="{{ getLink('account/characters/create') }}" method="post" style="margin:0;">
+					{{ csrf() }}
+					<button type="submit" class="btn primary sm">+ new character</button>
+				</form>
+			</div>
+			<div class="col gap-16">
+				{% for player in players %}
+					{% set voc = player.getVocationName() %}
+					{% set vcls = voc starts with 'Knight' ? 'k' : (voc starts with 'Paladin' or voc starts with 'Royal' ? 'p' : (voc starts with 'Druid' or voc starts with 'Elder' ? 'd' : 's')) %}
+					<div class="panel">
+						<div class="row between" style="align-items: flex-start;">
+							<div class="row gap-16">
+								<div class="portrait" style="width:56px; height:56px;">{{ player.getName()|slice(0, 2) }}</div>
+								<div>
+									<div class="row gap-8" style="align-items: baseline;">
+										<a href="{{ getLink('characters/' ~ player.getName()|urlencode) }}" style="border-bottom:0; color: var(--fg); font-size: var(--fs-lg);">{{ player.getName() }}</a>
+										{% if player.isOnline() %}<span class="badge ok">● online</span>{% else %}<span class="badge">offline</span>{% endif %}
+										{% if player.isDeleted() %}<span class="badge danger">deleted</span>{% endif %}
+										{% if player.isHidden() %}<span class="badge">hidden</span>{% endif %}
+									</div>
+									<div class="row gap-16 mt-8 fs-xs dim wrap">
+										<span class="voc {{ vcls }}">{{ voc|lower }}</span>
+										<span>L {{ player.getLevel() }}</span>
+										<span>{{ config.towns[player.getTownId()] }}</span>
+									</div>
+								</div>
+							</div>
+							<div class="row gap-8">
+								<a class="btn sm ghost" href="{{ getLink('account/characters/change-comment?name=' ~ player.getName()|urlencode) }}">edit</a>
+								<a class="btn sm" href="{{ getLink('characters/' ~ player.getName()|urlencode) }}">manage</a>
+							</div>
+						</div>
+					</div>
+				{% endfor %}
+			</div>
+			<div class="row gap-8 mt-16 wrap">
+				{% if setting('core.account_change_character_name') %}
+				<form action="{{ getLink('account/characters/change-name') }}" method="post" style="margin:0;">{{ csrf() }}<button class="btn sm ghost">change name</button></form>
+				{% endif %}
+				{% if setting('core.account_change_character_sex') %}
+				<form action="{{ getLink('account/characters/change-sex') }}" method="post" style="margin:0;">{{ csrf() }}<button class="btn sm ghost">change sex</button></form>
+				{% endif %}
+				<form action="{{ getLink('account/characters/delete') }}" method="post" style="margin:0;">{{ csrf() }}<button class="btn sm danger">delete character</button></form>
+			</div>
+			{{ hook('HOOK_ACCOUNT_MANAGE_AFTER_CHARACTERS') }}
+		</div>
+
+		{# --- sessions (account action log) --- #}
+		<div data-pane="sessions" style="display:none;">
+			{{ hook('HOOK_ACCOUNT_MANAGE_BEFORE_ACCOUNT_LOGS') }}
+			<div class="panel">
+				<div class="panel-head"><h3>recent sessions</h3><span class="panel-meta">account action log</span></div>
+				{% if actions is empty %}
+					<div class="fs-sm dim">No recorded sessions yet.</div>
+				{% else %}
+				<table class="table">
+					<thead><tr><th>when</th><th>action</th><th>ip</th></tr></thead>
+					<tbody>
+						{% for action in actions %}
+						<tr>
+							<td class="tabular">{{ action.date|date("Y-m-d H:i:s") }}</td>
+							<td>{{ action.action }}</td>
+							<td class="tabular dim">{{ action.ip }}</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+				{% endif %}
+			</div>
+		</div>
+
+		{# --- audit (n/a placeholder) --- #}
+		<div data-pane="audit" style="display:none;">
+			<div class="panel">
+				<div class="panel-head"><h3>audit log</h3><span class="panel-meta">n/a</span></div>
+				<pre class="fs-xs dim" style="margin:0; line-height:1.7;"># detailed audit log is not surfaced by this AAC.
+# see the "sessions" tab for the account action log.</pre>
+			</div>
+		</div>
+
+		{# --- api (n/a placeholder) --- #}
+		<div data-pane="api" style="display:none;">
+			<div class="panel">
+				<div class="panel-head"><h3>api keys</h3><span class="panel-meta">n/a</span></div>
+				<div class="fs-sm dim">API key management is not available in this AAC.</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+(function () {
+	var tabs = document.getElementById('dash-tabs');
+	if (!tabs) return;
+	var btns = Array.prototype.slice.call(tabs.querySelectorAll('button'));
+	var panes = Array.prototype.slice.call(document.querySelectorAll('[data-pane]'));
+	btns.forEach(function (b) {
+		b.addEventListener('click', function () {
+			btns.forEach(function (x) { x.classList.remove('active'); });
+			b.classList.add('active');
+			var t = b.getAttribute('data-tab');
+			panes.forEach(function (p) {
+				p.style.display = (p.getAttribute('data-pane') === t) ? '' : 'none';
+			});
+		});
+	});
+})();
+</script>

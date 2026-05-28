@@ -1,0 +1,216 @@
+{# OpenTibia.UK — account creation, terminal aesthetic.
+   Variables from system/pages/account/create.php:
+   account, email, errors{}, save, accept_rules, countries, country, country_recognized,
+   and when character creation is enabled: name, sex, vocation, town.
+   Config: config.genders, config.character_samples, config.vocations,
+   config.character_towns, config.towns.
+   Server-side validation is MyAAC's; client JS in account.create.js.html.twig is UX only. #}
+{{ hook('HOOK_ACCOUNT_CREATE_BEFORE_FORM') }}
+<form action="{{ getLink('account/create') }}" method="post" id="createaccount">
+	{{ csrf() }}
+	<input type="hidden" name="save" value="1" />
+
+	<div class="grid-12">
+		<div style="grid-column: span 8;">
+			<div class="panel">
+				<div class="panel-head"><h3>$ ./signup --interactive</h3><span class="panel-meta">~ 60 seconds</span></div>
+
+				{{ hook('HOOK_ACCOUNT_CREATE_BEFORE_ACCOUNT') }}
+
+				<div class="grid-2">
+					{% if not config.account_login_by_email %}
+					<div class="field">
+						<div class="lbl-row">
+							<label for="account">account {% if constant('USE_ACCOUNT_NAME') %}name{% else %}number{% endif %}</label>
+							<span class="hint">6–24 chars, lowercase a–z, 0–9</span>
+						</div>
+						<input id="account" name="account" data-preview="account"
+							class="input {% if errors.account is defined %}invalid{% endif %}"
+							maxlength="{% if constant('USE_ACCOUNT_NAME') %}30{% else %}10{% endif %}"
+							value="{{ account }}" placeholder="e.g. saltsprite" autofocus />
+						{% if errors.account is defined %}<div class="field-msg err">↳ {{ errors.account }}</div>{% endif %}
+					</div>
+					{% endif %}
+
+					{{ hook('HOOK_ACCOUNT_CREATE_AFTER_ACCOUNT') }}
+
+					<div class="field">
+						<div class="lbl-row">
+							<label for="email">email{% if not (setting('core.mail_enabled') and setting('core.account_mail_verify')) %} (optional){% endif %}</label>
+							<span class="hint">only for password resets, never marketing</span>
+						</div>
+						<input id="email" name="email" type="email" data-preview="email"
+							class="input {% if errors.email is defined %}invalid{% endif %}"
+							maxlength="50" value="{{ email }}" placeholder="you@somewhere.tld" />
+						{% if errors.email is defined %}<div class="field-msg err">↳ {{ errors.email }}</div>{% endif %}
+						{% if setting('core.mail_enabled') and setting('core.account_mail_verify') %}
+							<div class="fs-xs dim mt-8">use a real address — we send a verification link.</div>
+						{% endif %}
+					</div>
+				</div>
+
+				{{ hook('HOOK_ACCOUNT_CREATE_AFTER_EMAIL') }}
+
+				{% if setting('core.account_country') %}
+				<div class="field">
+					<div class="lbl-row"><label for="account_country">country</label></div>
+					<select id="account_country" name="country" class="select">
+						{% for code, country_ in countries %}
+							<option value="{{ code }}"{% if (country is defined and country == code) or (country is null and country_recognized == code) %} selected{% endif %}>{{ country_ }}</option>
+						{% endfor %}
+					</select>
+					{% if errors.country is defined %}<div class="field-msg err">↳ {{ errors.country }}</div>{% endif %}
+				</div>
+				{% endif %}
+
+				{{ hook('HOOK_ACCOUNT_CREATE_AFTER_COUNTRY') }}
+
+				<div class="grid-2">
+					<div class="field">
+						<div class="lbl-row">
+							<label for="password">password</label>
+							<span class="hint">≥ 10 chars. 2 of: upper, digit, symbol.</span>
+						</div>
+						<input id="password" name="password" type="password" data-pwmeter
+							class="input {% if errors.password is defined %}invalid{% endif %}"
+							maxlength="29" placeholder="••••••••••" autocomplete="new-password" />
+						<div id="pwmeter" class="mt-8" style="display:none;">
+							<div class="bar"><i id="pwmeter_bar" style="width:0%;"></i></div>
+							<div class="fs-xs mt-8 dim">strength · <span id="pwmeter_label"></span></div>
+						</div>
+						{% if errors.password is defined %}<div class="field-msg err">↳ {{ errors.password }}</div>{% endif %}
+					</div>
+					<div class="field">
+						<div class="lbl-row">
+							<label for="password_confirm">confirm password</label>
+							<span class="hint">paste twice if you must</span>
+						</div>
+						<input id="password_confirm" name="password_confirm" type="password"
+							class="input {% if errors.password is defined %}invalid{% endif %}"
+							maxlength="29" placeholder="••••••••••" autocomplete="new-password" />
+						<div id="pwconfirm_msg" class="field-msg err" style="display:none;">↳ does not match.</div>
+					</div>
+				</div>
+
+				{{ hook('HOOK_ACCOUNT_CREATE_AFTER_PASSWORDS') }}
+
+				{% if setting('core.account_create_character_create') %}
+				<div class="hr"></div>
+				<div class="upper mute mb-16">— starter character</div>
+
+				{{ hook('HOOK_ACCOUNT_CREATE_BEFORE_CHARACTER_NAME') }}
+
+				<div class="grid-2">
+					<div class="field">
+						<div class="lbl-row">
+							<label for="character_name">character name</label>
+							<span class="hint">letters, single spaces.</span>
+						</div>
+						<input id="character_name" name="name" data-preview="character"
+							class="input {% if errors.name is defined %}invalid{% endif %}"
+							size="{{ setting('core.create_character_name_max_length') }}"
+							maxlength="{{ setting('core.create_character_name_max_length') }}"
+							value="{{ name|default('') }}" placeholder="e.g. Saltspider" />
+						{% if errors.name is defined %}<div class="field-msg err">↳ {{ errors.name }}</div>{% endif %}
+					</div>
+
+					{{ hook('HOOK_ACCOUNT_CREATE_AFTER_CHARACTER_NAME') }}
+
+					<div class="field">
+						<div class="lbl-row">
+							<label>sex</label>
+							<span class="hint">cosmetic. swap at the temple.</span>
+						</div>
+						<div class="row gap-8">
+							{% set si = 0 %}
+							{% for id, gender in config.genders|reverse(true) %}
+								{% set si = si + 1 %}
+								<label class="btn sm{% if sex is defined and sex == id %} primary{% elseif si == 1 and sex is not defined %} primary{% endif %}" data-sex-btn style="cursor:pointer;">
+									<input type="radio" name="sex" value="{{ id }}" style="display:none;"{% if (sex is defined and sex == id) or (si == 1 and sex is not defined) %} checked{% endif %} />
+									{{ gender|lower }}
+								</label>
+							{% endfor %}
+						</div>
+						{% if errors.sex is defined %}<div class="field-msg err">↳ {{ errors.sex }}</div>{% endif %}
+					</div>
+				</div>
+
+				{{ hook('HOOK_ACCOUNT_CREATE_AFTER_SEX') }}
+
+				{% if config.character_samples|length > 1 %}
+				<div class="field">
+					<div class="lbl-row">
+						<label>starting vocation</label>
+						<span class="hint">all start in the temple, no quest required.</span>
+					</div>
+					<div class="grid-4">
+						{% for key, sample_char in config.character_samples %}
+							{% set vname = config['vocations'][key] %}
+							{% set vcls = vname starts with 'Knight' ? 'k' : (vname starts with 'Paladin' ? 'p' : (vname starts with 'Druid' ? 'd' : 's')) %}
+							{% set selected = (vocation is defined and vocation == key) or (vocation is not defined and loop.first) %}
+							<label class="panel" data-voc-card style="padding:12px; cursor:pointer;{% if selected %} border-color: var(--accent); background: var(--bg-row);{% endif %}">
+								<input type="radio" name="vocation" value="{{ key }}" style="display:none;"{% if selected %} checked{% endif %} />
+								<span class="voc {{ vcls }}">{{ vname|lower }}</span>
+							</label>
+						{% endfor %}
+					</div>
+					{% if errors.vocation is defined %}<div class="field-msg err">↳ {{ errors.vocation }}</div>{% endif %}
+				</div>
+				{% endif %}
+
+				{{ hook('HOOK_ACCOUNT_CREATE_AFTER_VOCATION') }}
+
+				{% if config.character_towns|length > 1 %}
+				<div class="field">
+					<div class="lbl-row">
+						<label for="town">starting town</label>
+						<span class="hint">just where you spawn. travel anywhere after.</span>
+					</div>
+					<select id="town" name="town" data-preview="town" class="select">
+						{% for town_id in config.character_towns %}
+							<option value="{{ town_id }}"{% if town is defined and town == town_id %} selected{% endif %}>{{ config.towns[town_id] }}</option>
+						{% endfor %}
+					</select>
+				</div>
+				{% endif %}
+
+				{{ hook('HOOK_ACCOUNT_CREATE_AFTER_TOWNS') }}
+				{% endif %}
+
+				<div class="hr"></div>
+
+				<label class="row gap-8 fs-sm" style="cursor:pointer; align-items:flex-start;">
+					<input type="checkbox" id="accept_rules" name="accept_rules" value="true" style="margin-top:3px;"{% if accept_rules %} checked{% endif %} />
+					<span>
+						I have read the <a href="?subtopic=rules" target="_blank">{{ config.lua.serverName }} rules</a> and accept them. I understand botting is allowed, RMT is not, and the admin reads the deathlog for fun.
+					</span>
+				</label>
+				{% if errors.accept_rules is defined %}<div class="field-msg err">↳ {{ errors.accept_rules }}</div>{% endif %}
+
+				{{ hook('HOOK_ACCOUNT_CREATE_AFTER_BOXES') }}
+
+				<div class="row between mt-24 wrap">
+					<span class="fs-xs dim" id="signup_status"></span>
+					<div class="row gap-8">
+						<a class="btn ghost" href="{{ getLink('account/manage') }}">back to login</a>
+						{{ hook('HOOK_ACCOUNT_CREATE_BEFORE_SUBMIT_BUTTON') }}
+						<button type="submit" class="btn primary">$ create</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div style="grid-column: span 4;">
+			<div class="panel">
+				<div class="panel-head"><h3>preview</h3><span class="panel-meta">live</span></div>
+				<pre id="signup_preview" class="fs-xs" style="margin:0; color: var(--fg-dim); white-space: pre-wrap;"></pre>
+				<div class="hr"></div>
+				<div class="fs-xs dim">
+					<div class="cmt">what happens next</div>
+					Your character spawns in the temple at the starting level with starter gear. There's a free backpack on the bed. Read the note. The note is important.
+				</div>
+			</div>
+		</div>
+	</div>
+</form>
+{{ hook('HOOK_ACCOUNT_CREATE_AFTER_FORM') }}

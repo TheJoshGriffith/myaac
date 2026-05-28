@@ -1,0 +1,69 @@
+{# OpenTibia.UK — bestiary index, terminal aesthetic.
+   Variables from system/pages/monsters.php:
+   monsters[] (name, health, exp, mana, summonable, convinceable, race, rewardboss,
+   img_link when preview), preview (bool).
+   The handoff didn't design an index page, so this is a .table-based listing
+   in the same aesthetic with a live client-side name filter. #}
+{% if monsters is not empty %}
+<div class="panel mb-16">
+	<div class="row gap-16 wrap" style="align-items: flex-end;">
+		<div style="flex: 1; min-width: 200px;">
+			<label class="upper dim mb-8" style="display:block;">filter</label>
+			<input class="input" id="best-filter" placeholder="search creatures…" />
+		</div>
+		<div class="row gap-8">
+			<a class="btn" href="{{ getLink('monsters') }}">all</a>
+			<a class="btn" href="{{ getLink('monsters') }}?boss=view">bosses</a>
+		</div>
+	</div>
+	<div class="fs-xs dim mt-16">// {{ monsters|length }} creatures catalogued</div>
+</div>
+
+<div class="panel" style="padding: 0;">
+	<table class="table">
+		<thead>
+			<tr>
+				<th>name</th>
+				<th>boss</th>
+				<th class="num">health</th>
+				<th class="num">experience</th>
+				<th class="num">summon mana</th>
+				<th class="num">convince mana</th>
+				<th>race</th>
+			</tr>
+		</thead>
+		<tbody id="best-body">
+			{% for monster in monsters %}
+			<tr>
+				<td>{{ getMonsterLink(monster.name, true)|raw }}</td>
+				<td>{% if monster.rewardboss %}<span class="badge warn">boss</span>{% else %}<span class="mute">—</span>{% endif %}</td>
+				<td class="num tabular">{{ monster.health|number_format(0, '.', ',') }}</td>
+				<td class="num tabular accent">{{ monster.exp|number_format(0, '.', ',') }}</td>
+				<td class="num tabular dim">{{ monster.summonable ? monster.mana : '—' }}</td>
+				<td class="num tabular dim">{{ monster.convinceable ? monster.mana : '—' }}</td>
+				<td class="dim">{{ monster.race|lower }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+
+<script type="text/javascript">
+(function () {
+	var f = document.getElementById('best-filter');
+	var body = document.getElementById('best-body');
+	if (!f || !body) return;
+	f.addEventListener('input', function () {
+		var q = f.value.toLowerCase();
+		Array.prototype.slice.call(body.querySelectorAll('tr')).forEach(function (tr) {
+			tr.style.display = tr.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none';
+		});
+	});
+})();
+</script>
+{% else %}
+<div class="panel">
+	<div class="panel-head"><h3>bestiary empty</h3></div>
+	<div class="fs-sm dim">No creatures catalogued on this server.</div>
+</div>
+{% endif %}

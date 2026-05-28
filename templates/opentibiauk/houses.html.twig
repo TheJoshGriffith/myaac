@@ -1,0 +1,114 @@
+{# OpenTibia.UK — house list, terminal aesthetic.
+   Variables from system/pages/houses.php:
+   errors[], houses[] (owner, name, size, rent, rentedBy|raw, link),
+   housesSearch (bool), houseType, townName, townId, guild (string),
+   cleanOldHouse, state, order, type, config.towns.
+   This AAC has no auction/bid/beds KPIs, so the statstrip shows total /
+   occupied / available derived from rentedBy, and "on auction" is omitted. #}
+{% if errors is not empty %}
+	{% for error in errors %}
+		<div class="panel mb-16"><pre class="fs-sm" style="margin:0; color: var(--danger);">↳ {{ error }}</pre></div>
+	{% endfor %}
+{% else %}
+
+{% if houses is not empty %}
+	{% set occupied = 0 %}
+	{% for h in houses %}{% if h.owner.name is defined and h.owner.name is not empty %}{% set occupied = occupied + 1 %}{% endif %}{% endfor %}
+	<div class="statstrip">
+		<div class="stat"><div class="k">listed houses</div><div class="v">{{ houses|length }}</div></div>
+		<div class="stat"><div class="k">occupied</div><div class="v">{{ occupied }}</div></div>
+		<div class="stat"><div class="k">available now</div><div class="v" style="color: var(--accent);">{{ houses|length - occupied }}</div></div>
+		<div class="stat"><div class="k">town</div><div class="v" style="font-size: var(--fs-lg);">{{ townName|default('all')|lower }}</div></div>
+	</div>
+{% endif %}
+
+<div class="fs-xs dim mb-24">// available {{ houseType|lower }}{{ guild }}{% if townName is not empty %} in {{ townName }}{% endif %}. {% if cleanOldHouse is not empty %}cleaned during global save after {{ cleanOldHouse }} idle days.{% endif %}</div>
+
+{% if houses is not empty or housesSearch %}
+<div class="panel mb-16" style="padding: 0;">
+	<table class="table">
+		<thead>
+			<tr>
+				<th>name</th>
+				<th class="num">size</th>
+				<th class="num">rent</th>
+				<th>status</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			{% if houses is not empty %}
+				{% for house in houses %}
+				<tr>
+					<td>{{ house.name }}</td>
+					<td class="num tabular">{{ house.size }}</td>
+					<td class="num tabular">{{ house.rent|number_format(0, '.', ',') }} gp</td>
+					<td>
+						{% if house.owner.name is defined and house.owner.name is not empty %}
+							<span class="badge">occupied</span> <span class="dim fs-xs">{{ house.rentedBy|raw }}</span>
+						{% else %}
+							<span class="badge ok">available</span> <span class="dim fs-xs">— open to claim —</span>
+						{% endif %}
+					</td>
+					<td class="right"><a href="{{ house.link }}" class="fs-xs">view →</a></td>
+				</tr>
+				{% endfor %}
+			{% else %}
+				<tr><td colspan="100%"><span class="dim">no {{ houseType|lower }} with the specified criteria.</span></td></tr>
+			{% endif %}
+		</tbody>
+	</table>
+</div>
+{% endif %}
+
+<form action="{{ getLink('houses') }}" method="post">
+	<div class="panel">
+		<div class="panel-head"><h3>$ house search</h3></div>
+		<div class="grid-3">
+			<div>
+				<label class="upper dim mb-8" style="display:block;">town</label>
+				<div class="col gap-4 fs-sm" style="max-height: 220px; overflow:auto;">
+					{% set checked = false %}
+					{% for id, name in config.towns %}
+						{% if id > 0 and name is not empty %}
+							{% set variable = '' %}
+							{% if ((townId is empty and name is not empty) or id == townId) and not checked %}
+								{% set variable = 'checked' %}
+								{% set checked = true %}
+							{% endif %}
+							<label class="row gap-8" style="cursor:pointer;">
+								<input type="radio" name="town" value="{{ id }}" {{ variable }} />
+								{{ name|lower }}
+							</label>
+						{% endif %}
+					{% endfor %}
+				</div>
+			</div>
+			<div>
+				<label class="upper dim mb-8" style="display:block;">status</label>
+				<div class="col gap-4 fs-sm">
+					<label class="row gap-8" style="cursor:pointer;"><input type="radio" name="state" value=""{% if state is empty %} checked{% endif %} /> all states</label>
+					<label class="row gap-8" style="cursor:pointer;"><input type="radio" name="state" value="free"{% if state == 'free' %} checked{% endif %} /> available</label>
+					<label class="row gap-8" style="cursor:pointer;"><input type="radio" name="state" value="rented"{% if state == 'rented' %} checked{% endif %} /> occupied</label>
+				</div>
+				<label class="upper dim mb-8 mt-16" style="display:block;">order</label>
+				<div class="col gap-4 fs-sm">
+					<label class="row gap-8" style="cursor:pointer;"><input type="radio" name="order" value=""{% if order is empty %} checked{% endif %} /> by name</label>
+					<label class="row gap-8" style="cursor:pointer;"><input type="radio" name="order" value="size"{% if order == 'size' %} checked{% endif %} /> by size</label>
+					<label class="row gap-8" style="cursor:pointer;"><input type="radio" name="order" value="rent"{% if order == 'rent' %} checked{% endif %} /> by rent</label>
+				</div>
+			</div>
+			<div>
+				<label class="upper dim mb-8" style="display:block;">type</label>
+				<div class="col gap-4 fs-sm">
+					<label class="row gap-8" style="cursor:pointer;"><input type="radio" name="type" value=""{% if type is empty %} checked{% endif %} /> all</label>
+					<label class="row gap-8" style="cursor:pointer;"><input type="radio" name="type" value="houses"{% if type == 'houses' %} checked{% endif %} /> houses and flats</label>
+					<label class="row gap-8" style="cursor:pointer;"><input type="radio" name="type" value="guildhalls"{% if type == 'guildhalls' %} checked{% endif %} /> guildhalls</label>
+				</div>
+			</div>
+		</div>
+		<div class="hr"></div>
+		<button type="submit" class="btn primary">$ search</button>
+	</div>
+</form>
+{% endif %}

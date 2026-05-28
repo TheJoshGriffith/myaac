@@ -1,0 +1,12 @@
+{# OpenTibia.UK — character lookup search box, terminal aesthetic.
+   Variables: link (POST target), autofocus (bool).
+   Server-side search works as MyAAC already does (POST name -> characters page). #}
+<form action="{{ link }}" method="post">
+	<div class="upper mute mb-16"># find a character</div>
+	<div class="searchbox" style="max-width: 640px;">
+		<span class="marker">›</span>
+		<input type="text" name="name" maxlength="29" placeholder="name, or part of a name…"{% if autofocus %} autofocus{% endif %} />
+		<span class="hint">enter <span class="kbd">↵</span></span>
+	</div>
+	<div class="fs-xs dim mt-16">// wildcards and partial matches work. case-insensitive.</div>
+</form>

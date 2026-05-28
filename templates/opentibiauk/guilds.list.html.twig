@@ -1,0 +1,59 @@
+{# OpenTibia.UK — guild list, terminal aesthetic.
+   Variables from system/pages/guilds/list.php:
+   guilds[] (name, logo, link, description), isAdmin, logged.
+   This AAC's list page only surfaces name + description + logo, so the
+   prototype's member-count / founded / leader / town / war fields are
+   omitted gracefully (shown as — or dropped). #}
+{% if guilds|length > 0 %}
+<div class="grid-2">
+	{% for guild in guilds %}
+	<div class="panel">
+		<div class="row between" style="align-items: flex-start;">
+			<div style="min-width:0;">
+				<div style="font-size: var(--fs-lg); margin-bottom: 4px;">{{ guild.name }}</div>
+				{% if guild.description is not empty %}
+					<div class="fs-xs dim mb-8">{{ guild.description|raw }}</div>
+				{% else %}
+					<div class="fs-xs mute mb-8">// no motto set</div>
+				{% endif %}
+			</div>
+			<span class="badge">guild</span>
+		</div>
+		<div class="hr"></div>
+		<div class="row between fs-xs">
+			<span class="dim">recruiting · ask in-game</span>
+			<form action="{{ guild.link }}" method="post" style="margin:0;">
+				{{ csrf() }}
+				<button type="submit" class="btn sm">view roster →</button>
+			</form>
+		</div>
+		{% if isAdmin %}
+		<div class="fs-xs mt-8"><a href="{{ getLink('guilds') }}?action=delete_by_admin&guild={{ guild.name }}" class="danger">delete (admin)</a></div>
+		{% endif %}
+	</div>
+	{% endfor %}
+</div>
+{% else %}
+<div class="panel">
+	<div class="panel-head"><h3>no guilds yet</h3></div>
+	<div class="fs-sm dim">There are no guilds on the server.{% if logged %} Found the first one below.{% endif %}</div>
+</div>
+{% endif %}
+
+<div class="hr"></div>
+
+<div class="row gap-16 wrap" style="justify-content: center;">
+	{% if logged %}
+		<form action="{{ getLink('guilds') }}?action=create" method="post" style="margin:0;">
+			{{ csrf() }}
+			<button type="submit" class="btn primary">$ found guild</button>
+		</form>
+		<a class="btn ghost" href="{{ getLink('guilds') }}?action=cleanup_players">cleanup players</a>
+		<a class="btn ghost" href="{{ getLink('guilds') }}?action=cleanup_guilds">cleanup guilds</a>
+	{% else %}
+		<form action="{{ getLink('account/manage') }}?redirect={{ getLink('guilds') }}" method="post" style="margin:0;">
+			{{ csrf() }}
+			<button type="submit" class="btn primary">$ login to found a guild</button>
+		</form>
+	{% endif %}
+</div>
