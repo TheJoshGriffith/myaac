@@ -71,24 +71,30 @@ $serverName    = $config['lua']['serverName'] ?? 'OpenTibia';
         </header>
 
         <!-- page content (rendered by MyAAC's page system) -->
-        <main class="page">
-            <div class="container">
-                <?php
-                // MyAAC injects per-page output into $content. Most pages
-                // render directly via the template system; for those, we
-                // wrap in a simple .pagehead + body.
-                $isLanding = isset($_GET['subtopic']) ? false : ($title === 'Latest News' || $title === 'News');
+        <?php
+        // Landing = the news index with no specific article/archive view.
+        $subtopic  = $_GET['subtopic'] ?? '';
+        $isLanding = ($subtopic === '' || $subtopic === 'news')
+            && !isset($_GET['id']) && !isset($_GET['archive']);
 
-                if (!$isLanding) {
-                    echo '<div class="pagehead">';
-                    echo '  <div class="crumb"><a href="' . getLink('news') . '">~</a> / ' . htmlspecialchars(strtolower($title)) . '</div>';
-                    echo '  <h1>' . htmlspecialchars(strtolower($title)) . '</h1>';
-                    echo '</div>';
-                }
-                echo $content;
-                ?>
-            </div>
-        </main>
+        if ($isLanding && is_file(__DIR__ . '/landing.php')) {
+            // landing.php emits its own <section> chrome (hero + grid + features)
+            // and consumes $content (the news-item list) inline.
+            include __DIR__ . '/landing.php';
+        } else {
+            ?>
+            <main class="page">
+                <div class="container">
+                    <div class="pagehead">
+                        <div class="crumb"><a href="<?php echo getLink('news'); ?>">~</a> / <?php echo htmlspecialchars(strtolower($title)); ?></div>
+                        <h1><?php echo htmlspecialchars(strtolower($title)); ?></h1>
+                    </div>
+                    <?php echo $content; ?>
+                </div>
+            </main>
+            <?php
+        }
+        ?>
 
         <!-- footer -->
         <footer class="foot">
