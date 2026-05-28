@@ -146,7 +146,7 @@
 					<div class="grid-4">
 						{% for key, sample_char in config.character_samples %}
 							{% set vname = config['vocations'][key] %}
-							{% set vcls = vname starts with 'Knight' ? 'k' : (vname starts with 'Paladin' ? 'p' : (vname starts with 'Druid' ? 'd' : 's')) %}
+							{% set vcls = vname starts with 'Knight' ? 'k' : (vname starts with 'Monk' ? 'k' : (vname starts with 'Paladin' ? 'p' : (vname starts with 'Druid' ? 'd' : 's'))) %}
 							{% set selected = (vocation is defined and vocation == key) or (vocation is not defined and loop.first) %}
 							<label class="panel" data-voc-card style="padding:12px; cursor:pointer;{% if selected %} border-color: var(--accent); background: var(--bg-row);{% endif %}">
 								<input type="radio" name="vocation" value="{{ key }}" style="display:none;"{% if selected %} checked{% endif %} />
