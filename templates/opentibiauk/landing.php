@@ -20,6 +20,10 @@ $rateLoot  = $lua['rateLoot']  ?? null;
 $worldType = $lua['worldType'] ?? 'open';
 $protocol  = '15.11';
 
+// PvP is open all week; Saturdays (Europe/London) go hardcore (pvp-enforced),
+// driven by the saturday_pvp.lua GlobalEvent. Mirror that on the status panel.
+$isHardcoreDay = (new DateTime('now', new DateTimeZone('Europe/London')))->format('N') === '6';
+
 // Top-5 ladder by level/experience.
 $ladder = [];
 try {
@@ -61,7 +65,7 @@ ART;
                 <p class="lede">
                     <span class="cmt">the pitch, dry-readme edition</span><br/>
                     Botting is allowed. Free open world. Do what you want.
-                    PvP is limited most days and encouraged on Saturdays.
+                    Open PvP all week, and every Saturday it goes hardcore.
                     Rates are mid-rate — quick through the early levels, easing
                     to 1× up top. A level 1000 should still take effort, not a
                     long weekend.
@@ -92,7 +96,7 @@ ART;
                         <div class="col gap-4"><div class="upper mute">exp rate</div><div class="fs-lg tabular">20×→1×</div></div>
                         <div class="col gap-4"><div class="upper mute">skill rate</div><div class="fs-lg tabular">15×→2×</div></div>
                         <div class="col gap-4"><div class="upper mute">loot rate</div><div class="fs-lg tabular"><?php echo $rateLoot !== null ? htmlspecialchars($rateLoot) . '×' : '—'; ?></div></div>
-                        <div class="col gap-4"><div class="upper mute">pvp</div><div class="fs-lg">sat. only</div></div>
+                        <div class="col gap-4"><div class="upper mute">pvp</div><div class="fs-lg"><?php echo $isHardcoreDay ? 'hardcore' : 'open'; ?></div></div>
                     </div>
                 </div>
             </div>
@@ -155,7 +159,7 @@ ART;
             <div class="panel">
                 <div class="fs-xs mute mb-8"><span class="prompt"></span>cron --list pvp</div>
                 <div class="fs-lg mb-8">saturdays are red</div>
-                <div class="dim fs-sm">One day a week, PvP rules relax. Houses stay locked. Bring a war shield and a sense of humour.</div>
+                <div class="dim fs-sm">Open PvP every day. Come Saturday it goes hardcore: no skulls, no safe zones, no second chances. Bring a war shield and a sense of humour.</div>
             </div>
         </div>
     </div>
