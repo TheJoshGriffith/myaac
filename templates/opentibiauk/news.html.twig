@@ -1,0 +1,22 @@
+{# OpenTibia.UK — news item, terminal aesthetic.
+   One of these is rendered per news entry by system/pages/news.php.
+   Variables: title, content (html), date, icon, author, comments (link or null), id, hide
+#}
+<article class="news-item">
+    <div class="meta">
+        <span class="mono">{{ date|date('Y-m-d') }}</span>
+        <span>·</span>
+        {% if author is not empty %}
+            <span>by <span class="accent">{{ author }}</span></span>
+            <span>·</span>
+        {% endif %}
+        <span class="badge">news</span>
+    </div>
+    <h3>{{ title }}</h3>
+    <div class="excerpt">{{ content|raw }}</div>
+    {% if comments is not null %}
+        <div class="mt-16">
+            <a href="{{ comments }}" class="prompt">comment</a>
+        </div>
+    {% endif %}
+</article>

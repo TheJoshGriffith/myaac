@@ -1,0 +1,14 @@
+{# Ticker (news.php renders these in a separate top region). Terminal styling. #}
+<div class="ticker mb-24">
+    <div class="ticker-head">
+        <span># live</span><span>·</span>
+    </div>
+    <div class="ticker-body">
+        {% for ticker in tickers %}
+            <div class="ticker-row">
+                <span class="t">{{ ticker.date|date('H:i') }}</span>
+                <span class="body">{{ ticker.body|raw }}</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
