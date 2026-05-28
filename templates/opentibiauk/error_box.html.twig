@@ -1,0 +1,12 @@
+{# Shared error box — the single most-used template (~50 call sites).
+   Terminal danger panel. #}
+<div class="panel mb-16" style="border-color: var(--danger)">
+    <div class="panel-head" style="border-bottom-color: var(--danger)">
+        <h3 class="danger"># errors</h3>
+    </div>
+    <ul class="col gap-8" style="margin:0;padding:0;list-style:none">
+        {% for error in errors %}
+            <li class="field-msg err">↳ {{ error|striptags('<b><a>')|raw }}</li>
+        {% endfor %}
+    </ul>
+</div>

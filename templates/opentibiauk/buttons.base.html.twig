@@ -1,0 +1,2 @@
+{# Terminal-styled form button. All buttons.* include this. #}
+<button {% if noSubmit is not defined %}type="submit"{% else %}type="button"{% endif %} name="{{ button_name }}" class="btn sm">{{ button_name|lower }}</button>

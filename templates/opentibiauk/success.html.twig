@@ -1,0 +1,18 @@
+{# Shared success box (account created, character created, password changed,
+   etc.) — ~30 call sites. Terminal panel with accent header. #}
+<div class="panel mb-16">
+    <div class="panel-head">
+        <h3 class="accent">✓ {{ title|raw }}</h3>
+    </div>
+    <div class="fs-sm" style="line-height: var(--line-loose)">
+        {{ description|raw }}
+    </div>
+</div>
+{% if custom_buttons is defined and custom_buttons is not null %}
+    {{ custom_buttons|raw }}
+{% elseif custom_buttons is not defined %}
+    <form action="{{ getLink('account/manage') }}" method="post">
+        {{ csrf() }}
+        {{ include('buttons.back.html.twig') }}
+    </form>
+{% endif %}

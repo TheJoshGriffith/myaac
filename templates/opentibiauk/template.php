@@ -73,8 +73,11 @@ $serverName    = $config['lua']['serverName'] ?? 'OpenTibia';
         <!-- page content (rendered by MyAAC's page system) -->
         <?php
         // Landing = the news index with no specific article/archive view.
-        $subtopic  = $_GET['subtopic'] ?? '';
-        $isLanding = ($subtopic === '' || $subtopic === 'news')
+        // MyAAC uses PATH_INFO routing, so $_GET['subtopic'] is empty on
+        // every page — use the router's PAGE constant instead (it resolves
+        // to 'news' on the homepage).
+        $currentPage = defined('PAGE') ? PAGE : '';
+        $isLanding = ($currentPage === 'news' || $currentPage === '')
             && !isset($_GET['id']) && !isset($_GET['archive']);
 
         if ($isLanding && is_file(__DIR__ . '/landing.php')) {
