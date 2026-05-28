@@ -1,0 +1,23 @@
+{# Changelog — terminal table. #}
+<div class="panel">
+    <div class="panel-head">
+        <h3># changelog</h3>
+        {% if canEdit %}<a class="fs-xs" href="{{ constant('ADMIN_URL') }}?p=changelog&action=new" target="_blank">+ add</a>{% endif %}
+    </div>
+    <table class="table">
+        <thead><tr><th>type</th><th>where</th><th>date</th><th>description</th>{% if canEdit %}<th></th>{% endif %}</tr></thead>
+        <tbody>
+            {% for log in changelogs %}
+                <tr>
+                    <td class="mono dim">{{ log.type }}</td>
+                    <td class="mono dim">{{ log.where }}</td>
+                    <td class="mono tabular">{{ log.date|date('Y-m-d') }}</td>
+                    <td>{{ log.body|nl2br }}</td>
+                    {% if canEdit %}<td class="fs-xs">{{ include('admin.links.html.twig', {page: 'changelog', id: log.id, hide: log.hide}) }}</td>{% endif %}
+                </tr>
+            {% else %}
+                <tr><td colspan="{% if canEdit %}5{% else %}4{% endif %}" class="dim">no changelog entries.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

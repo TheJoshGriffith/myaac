@@ -1,0 +1,28 @@
+{# Spells — single terminal table (replaces the tabbed default).
+   spell vars: type (1=instant,2=conjure), name, words, level, mana,
+   vocations (html), conjure_count, reagent. #}
+<div class="panel">
+    <div class="panel-head"><h3># spell library</h3><span class="panel-meta">{{ spells|length }} spells</span></div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>kind</th><th>name</th><th>words</th>
+                <th class="num">lvl</th><th class="num">mana</th><th>vocations</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for spell in spells %}
+                <tr>
+                    <td class="dim fs-xs upper">{{ spell.type == 2 ? 'conjure' : 'instant' }}</td>
+                    <td>{{ spell.name }}</td>
+                    <td class="mono accent">{{ spell.words }}</td>
+                    <td class="num tabular">{{ spell.level }}</td>
+                    <td class="num tabular">{{ spell.mana }}</td>
+                    <td class="fs-xs dim">{{ spell.vocations|raw }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="dim">no spells found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

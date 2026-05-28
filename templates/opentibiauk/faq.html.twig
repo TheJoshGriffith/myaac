@@ -1,0 +1,22 @@
+{# FAQ — native <details> disclosure, terminal panels. #}
+<div class="panel">
+    <div class="panel-head">
+        <h3># faq</h3>
+        {% if canEdit %}<a class="fs-xs" href="?subtopic=faq&action=new">+ add</a>{% endif %}
+    </div>
+    {% for faq in faqs %}
+        <details style="border-bottom:1px dotted var(--border);padding:8px 0">
+            <summary style="cursor:pointer;color:var(--fg)"><b>{{ faq.question|raw }}</b></summary>
+            <div class="dim fs-sm mt-8" style="line-height:var(--line-loose)">{{ faq.answer|raw }}</div>
+            {% if canEdit %}
+                <div class="row gap-8 mt-8 fs-xs">
+                    <a href="?subtopic=faq&action=edit&id={{ faq.id }}">edit</a>
+                    <a class="danger" href="?subtopic=faq&action=delete&id={{ faq.id }}" onclick="return confirm('Are you sure?')">delete</a>
+                    <a href="?subtopic=faq&action=hide&id={{ faq.id }}">{% if faq.hide != 1 %}hide{% else %}show{% endif %}</a>
+                </div>
+            {% endif %}
+        </details>
+    {% else %}
+        <div class="dim fs-sm">no questions yet.</div>
+    {% endfor %}
+</div>
