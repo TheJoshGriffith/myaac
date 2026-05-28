@@ -57,13 +57,14 @@ ART;
         <pre class="ascii lg" aria-hidden="true"><?php echo htmlspecialchars($ASCII); ?></pre>
         <div class="hero-grid mt-24">
             <div>
-                <h1>a low-rate <br/>open-tibia server<br/>that doesn't <span class="blink">scold you</span></h1>
+                <h1>a mid-rate <br/>open-tibia server<br/>that doesn't <span class="blink">scold you</span></h1>
                 <p class="lede">
                     <span class="cmt">the pitch, dry-readme edition</span><br/>
                     Botting is allowed. Free open world. Do what you want.
                     PvP is limited most days and encouraged on Saturdays.
-                    Rates are deliberately low — a level 1000 should take effort,
-                    not a long weekend.
+                    Rates are mid-rate — quick through the early levels, easing
+                    to 1× up top. A level 1000 should still take effort, not a
+                    long weekend.
                 </p>
                 <div class="row gap-8 wrap">
                     <?php if (!$logged): ?>
@@ -86,8 +87,10 @@ ART;
                         <div class="col gap-4"><div class="upper mute">peak today</div><div class="fs-lg tabular"><?php echo $peak; ?></div></div>
                         <div class="col gap-4"><div class="upper mute">protocol</div><div class="fs-lg tabular"><?php echo htmlspecialchars($protocol); ?></div></div>
                         <div class="col gap-4"><div class="upper mute">world type</div><div class="fs-lg"><?php echo htmlspecialchars($worldType); ?></div></div>
-                        <div class="col gap-4"><div class="upper mute">exp rate</div><div class="fs-lg tabular"><?php echo $rateExp !== null ? htmlspecialchars($rateExp) . '×' : 'stages'; ?></div></div>
-                        <div class="col gap-4"><div class="upper mute">skill rate</div><div class="fs-lg tabular"><?php echo $rateSkill !== null ? htmlspecialchars($rateSkill) . '×' : '—'; ?></div></div>
+                        <?php // Rates are staged (see deploy stages.lua); config.lua exposes only
+                              // the flat fallback (1×), so show the real curve instead. ?>
+                        <div class="col gap-4"><div class="upper mute">exp rate</div><div class="fs-lg tabular">20×→1×</div></div>
+                        <div class="col gap-4"><div class="upper mute">skill rate</div><div class="fs-lg tabular">15×→2×</div></div>
                         <div class="col gap-4"><div class="upper mute">loot rate</div><div class="fs-lg tabular"><?php echo $rateLoot !== null ? htmlspecialchars($rateLoot) . '×' : '—'; ?></div></div>
                         <div class="col gap-4"><div class="upper mute">pvp</div><div class="fs-lg">sat. only</div></div>
                     </div>
@@ -141,8 +144,8 @@ ART;
         <div class="grid-3">
             <div class="panel">
                 <div class="fs-xs mute mb-8"><span class="prompt"></span>cat /docs/rates</div>
-                <div class="fs-lg mb-8">low rates, on purpose</div>
-                <div class="dim fs-sm">Low exp, skill, loot. A level 1000 should take effort, not a long weekend. The grind is the point.</div>
+                <div class="fs-lg mb-8">mid rates, on purpose</div>
+                <div class="dim fs-sm">Fast early levels easing to 1× up top; loot stays at 1×. A level 1000 should take effort, not a long weekend. The grind is the point.</div>
             </div>
             <div class="panel">
                 <div class="fs-xs mute mb-8"><span class="prompt"></span>man bot</div>
