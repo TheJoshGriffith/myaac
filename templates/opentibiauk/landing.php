@@ -66,7 +66,11 @@ ART;
                     not a long weekend.
                 </p>
                 <div class="row gap-8 wrap">
-                    <a class="btn primary" href="<?php echo getLink('account/create'); ?>">$ create account</a>
+                    <?php if (!$logged): ?>
+                        <a class="btn primary" href="<?php echo getLink('account/create'); ?>">$ create account</a>
+                    <?php else: ?>
+                        <a class="btn primary" href="<?php echo getLink('account/manage'); ?>">$ my account</a>
+                    <?php endif; ?>
                     <a class="btn" href="<?php echo getLink('online'); ?>">see who's online</a>
                     <a class="btn ghost" href="<?php echo getLink('news'); ?>">read /news</a>
                 </div>
@@ -107,7 +111,7 @@ ART;
                 <div class="panel mb-16">
                     <div class="panel-head"><h3>top of the ladder</h3><a href="<?php echo getLink('highscores'); ?>" class="fs-xs">all</a></div>
                     <?php if (empty($ladder)): ?>
-                        <div class="dim fs-sm">no characters yet. <a href="<?php echo getLink('account/create'); ?>">be the first.</a></div>
+                        <div class="dim fs-sm">no characters yet. <a href="<?php echo getLink($logged ? 'account/characters/create' : 'account/create'); ?>">be the first.</a></div>
                     <?php else: foreach ($ladder as $i => $c): ?>
                         <div class="row between" style="padding:6px 0;border-bottom:1px dotted var(--border)">
                             <div class="row gap-8">
